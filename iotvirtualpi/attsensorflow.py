@@ -90,6 +90,8 @@ while 1 :
                     rgbLED = [0, 255, 255]
                 elif ledcolor == "WHITE" :
                     rgbLED = [255, 255, 255]
+                else :
+                    rgbLED = [0, 0, 0]
 
                 #Echo out parsed color
                 print "LED color:", ledcolor, rgbLED
