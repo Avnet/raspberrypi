@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<body bgcolor="#EFEFEF">
+
+<p></p>
+<big><b><font size="6">IoT Astro Pi FLOW/M2X Server Demo</font></b></big>
+<p></p>
+Security password: <input type="text" id="passwordText" name="Password" value="">
+<p></p>
+Select ID to control Pi: <select name=Address id="senseId">
+<option> </option>
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4</option>
+<option>5</option>
+<option>6</option>
+<option>7</option>
+<option>8</option>
+<option>ALL</option>
+</select>
+<p></p>
+<div class="aligncenter" style="width:525px;"><hr /></div>
+<p></p>
+<b>Available Actions:</b>
+<p></p>
+Message: <input type="text" id="msgText" name="Message" value="">    <button onclick="pokeFlow('msg')">Send Message</button>
+<p></p>
+<button onclick="pokeFlow('hi')">Display Heat Index</button>
+<p></p>
+<button onclick="pokeFlow('signalon')">Signal Bars On</button>
+<p></p>
+<button onclick="pokeFlow('signaloff')">Signal Bars Off</button>
+<p></p>
+<button onclick="pokeFlow('reset')">Reset</button>
+<p></p>
+<button onclick="pokeFlow('update')">Update Firmware</button>
+<p></p>
+<button onclick="pokeFlow('reboot')">Reboot</button>
+<p></p>
+<button onclick="pokeFlow('shutdown')">Shutdown Pi</button>
+<p></p>
+<div class="aligncenter" style="width:325px;"><hr /></div>
+Action Status: <input type="text" id="statusText" name="Status" value="Not Sent" size="26"><br>
+HTTP Response: <input type="text" id="respText" name="Response" value="" size="26"><br>
+<div class="aligncenter" style="width:325px;"><hr /></div>
+
+<p></p>
+<b>Online/Offline Status:</b>
+<p></p>
+Device 1: <input type="text" id="active1" name="Active Status" value="" size="10">  Device 5: <input type="text" id="active5" name="Active Status" value="" size="10"><br><br>
+Device 2: <input type="text" id="active2" name="Active Status" value="" size="10">  Device 6: <input type="text" id="active6" name="Active Status" value="" size="10"><br><br>
+Device 3: <input type="text" id="active3" name="Active Status" value="" size="10">  Device 7: <input type="text" id="active7" name="Active Status" value="" size="10"><br><br>
+Device 4: <input type="text" id="active4" name="Active Status" value="" size="10">  Device 8: <input type="text" id="active8" name="Active Status" value="" size="10"><br><br>
+
+<p></p>
+<big><b>M2X Streaming Plot - LTE RSRP (RSSI for fixed BW): ALL Sensors </b></big>
+<div class="att-m2x-widget" data-widget-url="http://api-m2x.att.com/v2/widgets/72efc10c" data-width="600" data-height="390" data-m2x-key="b0c9548f47ddb548e451192230e8468c"></div>
+<big><b>M2X Streaming Plot - FLOW Computed Heat Index Degrees: Device #1</b></big>
+<div class="att-m2x-widget" data-widget-url="http://api-m2x.att.com/v2/widgets/538b2f33" data-width="600" data-height="390" data-m2x-key="e9943d7712d13281cb4e9d40aa46d6e7"></div>
+<big><b>M2X Streaming Plot - Hue of FLOW Computed: Device #1</b></big>
+<div class="att-m2x-widget" data-widget-url="http://api-m2x.att.com/v2/widgets/94ee2bdc" data-width="600" data-height="390" data-m2x-key="6161865be351760ad9c2dd0736403582"></div>
+<big><b>M2X Streaming Plot - Stream Statistics: Device #1 </b></big>
+<div class="att-m2x-widget" data-widget-url="http://api-m2x.att.com/v2/widgets/6f2ad1ab" data-width="1000" data-height="650" data-m2x-key="7a49a1883fd588ddfe464ce79f300c18"></div>
+
+<!-- Include the following script tag only once per page -->
+<script src="https://m2x.att.com/widgets.js" async></script>
+
+<script>
+
+var pollTimer = setInterval(pollTimerCallback, 3000);
+
+function pollTimerCallback() {
+	pokeFlow('poll')
+}
+
+function httpGetAsync(theUrl, callback) {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() { 
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+            callback('success', xmlHttp.responseText)
+        else
+            callback('pending', xmlHttp.responseText)
+	}
+    xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+    xmlHttp.send(null);
+    delete xmlHttp
+}
+
+function getSuccess(passFail, responseText) {
+    var statusBox = document.getElementById('statusText')
+    var respBox = document.getElementById('respText')
+    
+	if (responseText === 'OK') {
+    	if (passFail == 'success')
+        	statusBox.setAttribute('value', 'Send Complete')
+    	else
+        	statusBox.setAttribute('value', 'Send Pending...')
+        respBox.setAttribute('value', responseText)        
+	}
+    else {
+        if (responseText.charAt(0) === 'S') {
+	    	// This should be a response to poll for status request
+    	    for (var i = 1; i < responseText.length; i++) {
+				var activeBox = document.getElementById('active' + i + '')        
+	        	if (responseText.charAt(i) == 'T') {
+    	        	// Device online
+	                activeBox.setAttribute('value', 'In Session')
+	            }
+	            else {
+	            	// Device offline
+	                activeBox.setAttribute('value', 'Offline')
+				}
+    	    }
+        }
+    }
+}
+
+function pokeFlow(buttonAction) {
+    var idSelect = document.getElementById('senseId')
+    var addr = idSelect.options[idSelect.selectedIndex].value
+    var msgContent
+    
+    // poll action doesn't need a valid device ID address, FLOW treats it special
+    if (addr == 'ALL' || buttonAction === 'poll')
+    	addr = addr
+	else if (isNaN(addr) || (addr < 1) || (addr > 8)) {
+        var statusBox = document.getElementById('statusText')
+        statusBox.setAttribute('value', 'Invalid Address')
+        return
+    }
+
+    // Sanity check msg
+	if (buttonAction == 'msg') {
+		var msgBox = document.getElementById('msgText')
+		if (msgBox.value == '') {
+			var statusBox = document.getElementById('statusText')
+			statusBox.setAttribute('value', 'Empty message')
+			return
+		}
+		else {
+            if (! /^[a-zA-Z. 0-9%]+$/.test(msgBox.value)) {
+				var statusBox = document.getElementById('statusText')
+				statusBox.setAttribute('value', 'Msg ERR! Only A-Z,a-z,0-9,.,%')
+				return
+			}
+		}
+        msgContent = msgBox.value
+	}
+	else
+		msgContent = ''  // Don't bother sending message content if not a message
+    
+    var passBox = document.getElementById('passwordText')
+    var password = passBox.value
+    if (! /^[a-zA-Z. 0-9%]+$/.test(password)) {
+        password = ''    // Certain chars cannot be pushed in an HTTP GET
+    }
+
+    // Setup the URL and data value payload to Flow
+    var FLOW_SERVER_URL = 'runm-east.att.io'
+    var FLOW_BASE_URL = '/ce323678bacc7/d235133ae3dc/0e68c11f947776c/in/flow'
+    var FLOW_URL_TYPE = '' // ' HTTP/1.1\r\nHost: '
+	var FLOW_INPUT_NAME = '/sendmessage?'
+    var FLOW_DATA = 'deviceId=' + addr + '&key=' + password + '&message=' + msgContent + '&action=' + buttonAction + ' '
+    var flowendpointUrl = FLOW_BASE_URL + FLOW_INPUT_NAME + FLOW_DATA
+    
+    if (buttonAction != 'poll') {
+    	var statusBox = document.getElementById('statusText')
+    	statusBox.setAttribute('value', 'Sending...')
+    }
+    httpGetAsync('//' + FLOW_SERVER_URL + flowendpointUrl, getSuccess)
+    return
+}
+</script>
+
+</body>
+</html>
