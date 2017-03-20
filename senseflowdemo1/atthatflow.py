@@ -336,6 +336,7 @@ while 1 :
         # Read PI HAT Sensor data to send to the Flow program via an http get request
         tempstr = str(round(sense.temp))
         humiditystr = str(round(sense.humidity))
+        pressurestr = str(round(sense.pressure))
         accelZ = accelY = accelX = 0 
         for i in range(1, NUM_POSITION_READINGS_AVG + 1) :
             orientation = sense.get_gyroscope()
@@ -381,7 +382,8 @@ while 1 :
                   "&inBtn4=" + button4 + \
                   "&inBtn5=" + button5 + \
                   "&rssi=" + str(mdm_rssi)  + \
-                  "&rsrp=" + str(mdm_rsrp) 
+                  "&rsrp=" + str(mdm_rsrp) + \
+                  "&measuredPressure=" + pressurestr 
     
         # Echo the string so you can see what is going on 
         #print "HTTP GET:"
