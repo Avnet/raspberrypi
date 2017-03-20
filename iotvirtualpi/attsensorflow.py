@@ -1,11 +1,9 @@
 """
 PI HAT FLOW SENSOR DEMO
 
-   Copyright 2016, Avnet (R)
-
    Contributors:
-     * Fred Kellerman, www.em.avnet.com 
- 
+     * Fred Kellerman
+
    Licensed under the Apache License, Version 2.0 (the "License"); 
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -92,6 +90,8 @@ while 1 :
                     rgbLED = [0, 255, 255]
                 elif ledcolor == "WHITE" :
                     rgbLED = [255, 255, 255]
+                else :
+                    rgbLED = [0, 0, 0]
 
                 #Echo out parsed color
                 print "LED color:", ledcolor, rgbLED
